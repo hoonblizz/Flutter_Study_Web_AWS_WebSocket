@@ -38,6 +38,8 @@ module.exports.databaseStreamHandler = async (event, context) => {
   console.log(JSON.stringify(event, null, 2));
   /*
     Testing from application using web socket
+    Test with local command like,
+    sls invoke -f databaseStreamHandler -d '{"requestContext": {"stage": "dev", "domainName": "us2q8s4g99.execute-api.us-east-1.amazonaws.com", "connectionId": "VDbIBcbCoAMAcqw="}, "body": "{\"randNum\":123456789,\"msg\":\"test from local invoke\"}"}'
   */
   const body = JSON.parse(event.body);
   const randNum = body.randNum;
