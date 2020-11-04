@@ -10,8 +10,11 @@ provider:
   profile: taehoon-flutter-study
   logs:
     websocket: true
+  environment:
+    TABLE_NAME: flutter-chat-tbl
  
 functions:
+  # Web sockets handlers
   connectionHandler:
     handler: handler.connectionHandler
     events:
@@ -28,3 +31,136 @@ functions:
     events:
       - websocket:
           route: databaseStream
+  # DynamoDB Stream Handler
+  chatTableStreamHandler:
+    handler: handler.chatTableStreamHandler
+    events:
+      - stream:
+        type: dynamodb
+        batchSize: 1
+        startingPosition: LATEST
+        arn:
+          Fn::GetAtt: [flutterChatTable, StreamArn]
+  # CONNECTED collection CRUD
+  createConnected:
+    handler: handler.createConnected
+    events:
+      - http:
+          path: ${self:service}/createConnected
+  getConnected:
+    handler: handler.getConnected
+    events:
+      - http:
+          path: ${self:service}/getConnected
+          method: get
+          response:
+            template: >
+              #set($inputRoot = $input.path('$'))
+              {
+                "body": $inputRoot
+              }
+  updateConnected:
+    handler: handler.updateConnected
+    events:
+      - http:
+          path: ${self:service}/updateConnected
+          method: post
+          cors: true
+          request:
+            template:
+              application/json: >
+                #set($inputRoot = $input.path('$'))
+                {
+                  "connectionId": $inputRoot.socketData.connectionId,
+                  "connectedAt": $inputRoot.socketData.connectedAt,
+                  "userName": $inputRoot.userData.userName
+                }
+  deleteConnected:
+    handler: handler.deleteConnected
+    events:
+      - http:
+          path: ${self:service}/deleteConnected    
+          method: get
+          request:
+            template:
+              application/json: >
+                {
+                  "userName": "$input.params('userName')",
+                  "connectionId": "$input.params('connectionId')",
+                }    
+  # MSG Collection CRUD
+  createMessage:
+    handler: handler.createMessage
+    events:
+      - http:
+          path: ${self:service}/createMessage
+          method: post
+          cors: true
+          request:
+            template:
+              application/json: >
+                #set($inputRoot = $input.path('$'))
+                {
+                  "connectionId": $inputRoot.socketData.connectionId,
+                  "domainName": $inputRoot.socketData.domainName,
+                  "stage": $inputRoot.socketData.stage,
+                  "userName": $inputRoot.userData.userName
+                }
+  getMessage:
+    handler: handler.getMessage
+    events:
+      - http:
+          path: ${self:service}/getMessage
+          method: get
+          request:
+            template:
+              application/json: >
+                {
+                  "userName": "$input.params('userName')"
+                }
+          response:
+            template: >
+              #set($inputRoot = $input.path('$'))
+              {
+                "body": $inputRoot
+              }
+  updateMessage:
+    handler: handler.updateMessage
+    events:
+      - http:
+          path: ${self:service}/updateMessage
+          method: post
+          request:
+            template:
+              application/json: >
+                #set($inputRoot = $input.path('$'))
+                {
+                  "connectionId": $inputRoot.socketData.connectionId,
+                  "domainName": $inputRoot.socketData.domainName,
+                  "stage": $inputRoot.socketData.stage,
+                  "userName": $inputRoot.userData.userName
+                }
+  # Table Stream Handler
+
+resources:
+  Resources:
+    flutterChatTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: flutter-chat-tbl
+        AttributeDefinitions:
+          - AttributeName: collection
+            AttributeType: S  
+          - AttributeName: subCollection
+            AttributeType: S
+        KeySchema:
+          - AttributeName: collection
+            KeyType: HASH   # Partition Key
+          - AttributeName: subCollection
+            KeyType: RANGE  # Sort key
+        ProvisionedThroughput:
+          ReadCapacityUnits: 10
+          WriteCapacityUnits: 10
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+          
