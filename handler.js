@@ -106,29 +106,67 @@ module.exports.createConnected = async (event, context, callback) => {
     }
   }
 
-  docClient.put(params, (err, data) => {
-    if (err) {
-      response = {
-        statusCode: 400,
-        body: JSON.stringify(err, null, 2),
-      };
-      console.error("Unable to create item. Error JSON:", JSON.stringify(err, null, 2));
-    } else {
-      response = {
-        statusCode: 200,
-        body: JSON.stringify(JSON.stringify(data, null, 2)),
-      };
-      console.log("Added item:", JSON.stringify(data, null, 2));
-    }
+  try {
+    const data = await docClient.put(params).promise();
+    response = {
+      statusCode: 200,
+      body: JSON.stringify(JSON.stringify(data, null, 2)),
+    };
+    console.log("Added item:", JSON.stringify(data, null, 2));
+  } catch(err) {
+    response = {
+      statusCode: 400,
+      body: JSON.stringify(err, null, 2),
+    };
+    console.error("Unable to create item. Error JSON:", JSON.stringify(err, null, 2));
+  }
 
-    callback(null, response);
-  });
-  
+  callback(null, response);
 };
+
+/// Create User in CONNECTED collection.
+/// sls invoke -f createConnectedUser -d '{"connectionId": "abcd12345", "connectedAt": 12345678, "userName": "testerUser"}'
+module.exports.createConnectedUser = async (event, context, callback) => {
+  let response = {};
+  console.log('Received event: ', JSON.stringify(event, null, 2));
+  
+  // destruct
+  const {connectionId, connectedAt, userName} = event;
+
+  var params = {
+    TableName: process.env.TABLE_NAME,
+    Item: {
+      "collection": "CONNECTED",  
+      "subCollection": "CONNECTED#USER#" + userName,
+      "data": {
+        "connectionId": connectionId,
+        "connectedAt": connectedAt,
+        "userName": userName
+      }
+    }
+  }
+
+  try {
+    const data = await docClient.put(params).promise();
+    response = {
+      statusCode: 200,
+      body: JSON.stringify(JSON.stringify(data, null, 2)),
+    };
+    console.log("Added item:", JSON.stringify(data, null, 2));
+  } catch(err) {
+    response = {
+      statusCode: 400,
+      body: JSON.stringify(err, null, 2),
+    };
+    console.error("Unable to create item. Error JSON:", JSON.stringify(err, null, 2));
+  }
+
+  callback(null, response);
+}
 
 /// Get all connected users
 module.exports.getConnected = async (event, context, callback) => {
-
+  let response = {};
   // With in "CONNECTED" collection, 
   // check if key "userName" exists and it's not null
   // 식 속성 이름 부르는 방법: Nested 같은 경우엔 하나씩 ExpressionAttributeNames 에 불러준 다음 Dot (.) 으로 써준다.
@@ -146,89 +184,101 @@ module.exports.getConnected = async (event, context, callback) => {
     }
   }
 
-  docClient.scan(params, (err, data) => {
-    if (err) {
-      response = {
-        statusCode: 400,
-        message: "Scan error",
-        body: JSON.stringify(err, null, 2),
-      };
-      console.error("Unable to get item. Error JSON:", JSON.stringify(err, null, 2));
-    } else {
+  try {
+    const data = await docClient.scan(params).promise();
+    // data.Items 라는 Array 로 나온다.
+    // Scan 은 최대 1MB 까지만 가져오므로, 1MB 가 넘을때를 대비한 코드도 필요하지만, 여기서는 넘어가자. 
+    // 여기서 더 찾아볼수 있다.
+    // https://docs.aws.amazon.com/ko_kr/amazondynamodb/latest/developerguide/GettingStarted.NodeJs.04.html
+    response = {
+      statusCode: 200,
+      message: "Scan completed",
+      body: data.Items,
+    };
+    console.log('Printing all scanned items....');
+    data.Items.forEach((el) => {
+      JSON.stringify(el, null, 2)
+    });
+  } catch(err) {
+    response = {
+      statusCode: 400,
+      message: "Scan error",
+      body: JSON.stringify(err, null, 2),
+    };
+    console.error("Unable to get item. Error JSON:", JSON.stringify(err, null, 2));
+  }
 
-      // data.Items 라는 Array 로 나온다.
-      // Scan 은 최대 1MB 까지만 가져오므로, 1MB 가 넘을때를 대비한 코드도 필요하지만, 여기서는 넘어가자. 
-      // 여기서 더 찾아볼수 있다.
-      // https://docs.aws.amazon.com/ko_kr/amazondynamodb/latest/developerguide/GettingStarted.NodeJs.04.html
-      response = {
-        statusCode: 200,
-        message: "Scan completed",
-        body: data.Items,
-      };
-      console.log('Printing all scanned items....');
-      data.Items.forEach((el) => {
-        JSON.stringify(el, null, 2)
-      });
-    }
-
-    callback(null, response);
-  });
+  callback(null, response);
 };
 
 /// Add Connected user
+/// To test, make sure to run createConnectedUser then run,
+/// sls invoke -f updateConnected -d '{"connectionId": "11223344abc", "connectedAt": 12345678, "userName": "testerUser"}'
+/// instead of update, put also works if Partition key and Sort key is marching.
 module.exports.updateConnected = async (event, context, callback) => {
-
+  let response = {};
+  console.log('Received event: ', JSON.stringify(event, null, 2));
+  
   // destruct
   const {connectionId, connectedAt, userName} = event;
 
   let updateExpressionString = 
-    "set data.userName = :userName, " +
-    "data.connectionId = :connectionId, " +
-    "data.connectedAt = :connectedAt";
+    "set "+
+    "#data.#userName = :userName, " +
+    "#data.#connectionId = :connectionId, " +
+    "#data.#connectedAt = :connectedAt";
 
   var params = {
-    TableName:table,
+    TableName: process.env.TABLE_NAME,
     Key:{
-      "collection": "CONNECTED",  
-      "subCollection": "CONNECTED#USER#" + userName
+      "collection": "CONNECTED",
+      "subCollection": "CONNECTED#USER#" + userName,
     },
     UpdateExpression: updateExpressionString,
+    ExpressionAttributeNames:{
+      "#data": "data",
+      "#userName": "userName",
+      "#connectionId": "connectionId",
+      "#connectedAt": "connectedAt"
+    },
     ExpressionAttributeValues:{
       ":userName": userName,
       ":connectionId": connectionId,
-      ":connectedAt": connectedAt
+      ":connectedAt": connectedAt ? connectedAt : 9999999
     },
     ReturnValues:"UPDATED_NEW"
   };
 
-  docClient.update(params, (err, data) => {
-    if (err) {
-      response = {
-        statusCode: 400,
-        message: "Update error",
-        body: JSON.stringify(err, null, 2),
-      };
-      console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
-    } else {
-      response = {
-        statusCode: 200,
-        message: "Update completed",
-        body: data,
-      };
-      console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
-      
-    }
+  try {
+    const data = await docClient.update(params).promise();
+    response = {
+      statusCode: 200,
+      message: "Update completed",
+      body: data,
+    };
+    console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
+  } catch(err) {
+    response = {
+      statusCode: 400,
+      message: "Update error",
+      body: JSON.stringify(err, null, 2),
+    };
+    console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
+  }
 
-    callback(null, response);
-  });
-
+  callback(null, response);
 };
 
-module.exports.deleteConnected = async (event, context, callback) => {
-
-
-};
+module.exports.deleteConnected = async (event, context, callback) => {};
 
 /******************************************************************
- * USER Colleciton handlers
+ * MSG Colleciton handlers
 ******************************************************************/
+module.exports.createMessage = async (event, context, callback) => {};
+module.exports.getMessage = async (event, context, callback) => {};
+module.exports.updateMessage = async (event, context, callback) => {};
+
+/******************************************************************
+ * Database Stream handlers
+******************************************************************/
+module.exports.chatTableStreamHandler = async (event, context, callback) => {};
