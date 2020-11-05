@@ -54,6 +54,28 @@ functions:
           arn:
             Fn::GetAtt: [flutterChatTable, StreamArn]
   # CONNECTED collection CRUD
+  testerFunction:
+    handler: handler.testerFunction
+    events:
+      - http:
+          path: ${self:service}/test/testerFunction
+          method: post
+          cors: true
+          integration: lambda
+          request:
+            template:
+              application/json: >
+                #set($inputRoot = $input.path('$'))
+                {
+                  "num1": $inputRoot.input.operand1,
+                  "num2": $inputRoot.input.operand2
+                }
+          response:
+            headers:
+              Access-Control-Allow-Origin: "'*'"
+              Content-Type: "'application/json'"
+            template: ${file(templates/template_defaultResponse.txt)}
+
   createConnected:
     handler: handler.createConnected
     events:
@@ -67,6 +89,18 @@ functions:
           path: ${self:service}/connected/createConnectedUser
           method: post
           cors: true
+          integration: lambda
+          request:
+            template:
+              application/json: ${file(templates/template_createConnectedUserRequest.txt)}
+            schema:
+              application/json: ${file(schemaValidators/schema_createConnectedUserRequest.json)}
+          response:
+            headers:
+              Access-Control-Allow-Origin: "'*'"
+              Content-Type: "'application/json'"
+            template: ${file(templates/template_defaultResponse.txt)}
+
   getConnected:
     handler: handler.getConnected
     events:

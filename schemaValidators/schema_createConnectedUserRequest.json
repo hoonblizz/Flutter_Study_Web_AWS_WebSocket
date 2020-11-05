@@ -1,0 +1,32 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "Connected user create / update schema validator",
+  "properties": {
+    "socketData": {
+      "type": "object",
+      "properties": {
+        "connectionId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9]+$"
+        },
+        "connectedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["connectionId"]
+    },
+    "userData": {
+      "type": "object",
+      "properties": {
+        "userName": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9]+$",
+          "maxLength": 15
+        }
+      },
+      "required": ["userName"]
+    }
+  }
+}

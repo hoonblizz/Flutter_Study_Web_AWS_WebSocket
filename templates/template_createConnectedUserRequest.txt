@@ -1,0 +1,6 @@
+#set($inputRoot = $input.path('$'))
+{
+  "connectionId": "$inputRoot.socketData.connectionId",
+  "connectedAt": $inputRoot.socketData.connectedAt,
+  "userName": "$inputRoot.userData.userName"
+}

@@ -1,6 +1,0 @@
-#set($inputRoot = $util.parseJson($input.path('$')))
-{
-  "connectionId": "$inputRoot.socketData.connectionId",
-  "connectedAt": "$inputRoot.socketData.connectedAt",
-  "userName": "$inputRoot.userData.userName"
-}

@@ -18,11 +18,19 @@
   Expression Attribute Names
   https://docs.aws.amazon.com/ko_kr/amazondynamodb/latest/developerguide/Expressions.ExpressionAttributeNames.html
 
+  Schema Validator Example:
+  https://www.fernandomc.com/posts/schema-validation-serverless-framework/
 */
 'use strict';
 const AWS = require("aws-sdk");
 require("aws-sdk/clients/apigatewaymanagementapi");
 var docClient = new AWS.DynamoDB.DocumentClient();
+
+module.exports.testerFunction = async (event, context) => { 
+  console.log('Event received: ', JSON.stringify(event, null, 2));
+  let {num1, num2} = event;
+  return num1 + num2;
+};
 
 /******************************************************************
  * Web socket handlers
@@ -126,7 +134,8 @@ module.exports.createConnected = async (event, context, callback) => {
 
 /// Create User in CONNECTED collection.
 /// sls invoke -f createConnectedUser -d '{"connectionId": "abcd12345", "connectedAt": 12345678, "userName": "testerUser"}'
-module.exports.createConnectedUser = async (event, context, callback) => {
+/// sls invoke -f createConnectedUser -d '{"socketData": {"connectionId": "abcd12345", "connectedAt": 12345678}, "userData": {"userName": "testerUser"}}'
+module.exports.createConnectedUser = async (event, context) => {
   let response = {};
   console.log('Received event: ', JSON.stringify(event, null, 2));
   
@@ -150,18 +159,21 @@ module.exports.createConnectedUser = async (event, context, callback) => {
     const data = await docClient.put(params).promise();
     response = {
       statusCode: 200,
-      body: JSON.stringify(JSON.stringify(data, null, 2)),
+      body: data,
     };
     console.log("Added item:", JSON.stringify(data, null, 2));
   } catch(err) {
     response = {
       statusCode: 400,
-      body: JSON.stringify(err, null, 2),
+      body: err,
     };
     console.error("Unable to create item. Error JSON:", JSON.stringify(err, null, 2));
   }
 
-  callback(null, response);
+  //callback(null, response);
+  // Stringify 를 안해주면, 
+  // { "result": {statusCode=200, body="{}"} } 이런식으로 결과가 나온다.
+  return JSON.stringify(response);
 }
 
 /// Get all connected users
