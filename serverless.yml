@@ -74,7 +74,7 @@ functions:
             headers:
               Access-Control-Allow-Origin: "'*'"
               Content-Type: "'application/json'"
-            template: ${file(templates/template_defaultResponse.txt)}
+            template: ${file(templates/template_default_response.txt)}
 
   createConnected:
     handler: handler.createConnected
@@ -92,21 +92,44 @@ functions:
           integration: lambda
           request:
             template:
-              application/json: ${file(templates/template_createConnectedUserRequest.txt)}
+              application/json: ${file(templates/template_connected_user_request.txt)}
             schema:
-              application/json: ${file(schemaValidators/schema_createConnectedUserRequest.json)}
+              application/json: ${file(schemaValidators/schema_connected_user_request.json)}
           response:
             headers:
               Access-Control-Allow-Origin: "'*'"
               Content-Type: "'application/json'"
-            template: ${file(templates/template_defaultResponse.txt)}
-
+            template: ${file(templates/template_default_response.txt)}
   getConnected:
     handler: handler.getConnected
     events:
       - http:
           path: ${self:service}/connected/getConnected
           method: get
+          integration: lambda
+          response:
+            headers:
+              Access-Control-Allow-Origin: "'*'"
+              Content-Type: "'application/json'"
+            template: ${file(templates/template_default_response.txt)}
+  getConnectedUser:
+    handler: handler.getConnectedUser
+    events:
+      - http:
+          path: ${self:service}/connected/getConnectedUser
+          method: get
+          integration: lambda
+          request:
+            template:
+              application/json: >
+                {
+                  "userName": "$input.params('userName')"
+                }
+          response:
+            headers:
+              Access-Control-Allow-Origin: "'*'"
+              Content-Type: "'application/json'"
+            template: ${file(templates/template_default_response.txt)}
   updateConnected:
     handler: handler.updateConnected
     events:
@@ -114,12 +137,35 @@ functions:
           path: ${self:service}/connected/updateConnected
           method: post
           cors: true
+          integration: lambda
+          request:
+            template:
+              application/json: ${file(templates/template_connected_user_request.txt)}
+            schema:
+              application/json: ${file(schemaValidators/schema_connected_user_request.json)}
+          response:
+            headers:
+              Access-Control-Allow-Origin: "'*'"
+              Content-Type: "'application/json'"
+            template: ${file(templates/template_default_response.txt)}
   deleteConnected:
     handler: handler.deleteConnected
     events:
       - http:
           path: ${self:service}/connected/deleteConnected    
           method: get
+          integration: lambda
+          request:
+            template:
+              application/json: >
+                {
+                  "userName": "$input.params('userName')"
+                }
+          response:
+            headers:
+              Access-Control-Allow-Origin: "'*'"
+              Content-Type: "'application/json'"
+            template: ${file(templates/template_default_response.txt)}
           
   # MSG Collection CRUD
   createMessage:
