@@ -37,6 +37,7 @@ module.exports.defaultHandler = async (event, context) => {
 };
 
 // Realtime Update messages to a single target user
+// This should be called from dynamoDB stream lambda function (See tableStreamHandler)
 module.exports.webSocketHandler = async (event, context) => {
   console.log(JSON.stringify(event, null, 2));
   /*

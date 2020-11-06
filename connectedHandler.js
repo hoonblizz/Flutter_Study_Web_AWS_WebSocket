@@ -51,15 +51,16 @@ module.exports.createConnectedUser = async (event, context) => {
   console.log('Received event: ', JSON.stringify(event, null, 2));
   
   // destruct
-  const {connectionId, connectedAt, userName} = event;
+  const {connectionId, ipAddress, connectedAt, userName} = event;
 
   var params = {
     TableName: process.env.TABLE_NAME,
     Item: {
       "collection": "CONNECTED",  
-      "subCollection": "CONNECTED#USER#" + userName,
+      "subCollection": "CONNECTED#USER#" + ipAddress,
       "data": {
         "connectionId": connectionId,
+        "ipAddress": ipAddress,
         "connectedAt": connectedAt,
         "userName": userName
       }
@@ -99,11 +100,11 @@ module.exports.getConnected = async (event, context, callback) => {
   // 식 속성 이름 부르는 방법: Nested 같은 경우엔 하나씩 ExpressionAttributeNames 에 불러준 다음 Dot (.) 으로 써준다.
   var params = {
     TableName: process.env.TABLE_NAME,
-    FilterExpression: "#collectionName = :cname AND (attribute_exists(#data.#userName) AND NOT #data.#userName = :null)",
+    FilterExpression: "#collectionName = :cname AND (attribute_exists(#data.#ipAddress) AND NOT #data.#ipAddress = :null)",
     ExpressionAttributeNames:{
       "#collectionName": "collection",
       "#data": "data",
-      "#userName": "userName"
+      "#ipAddress": "ipAddress"
     },
     ExpressionAttributeValues: {
       ":cname": "CONNECTED",
@@ -198,31 +199,34 @@ module.exports.updateConnected = async (event, context, callback) => {
   console.log('Received event: ', JSON.stringify(event, null, 2));
   
   // destruct
-  const {connectionId, connectedAt, userName} = event;
+  const {connectionId, ipAddress, connectedAt, userName} = event;
 
   let updateExpressionString = 
     "set "+
     "#data.#userName = :userName, " +
     "#data.#connectionId = :connectionId, " +
+    "#data.#ipAddress = :ipAddress, " +
     "#data.#connectedAt = :connectedAt";
 
   var params = {
     TableName: process.env.TABLE_NAME,
     Key:{
       "collection": "CONNECTED",
-      "subCollection": "CONNECTED#USER#" + userName,
+      "subCollection": "CONNECTED#USER#" + ipAddress,
     },
     UpdateExpression: updateExpressionString,
     ExpressionAttributeNames:{
       "#data": "data",
       "#userName": "userName",
       "#connectionId": "connectionId",
+      "#ipAddress": "ipAddress",
       "#connectedAt": "connectedAt"
     },
     ExpressionAttributeValues:{
       ":userName": userName,
       ":connectionId": connectionId,
-      ":connectedAt": connectedAt ? connectedAt : 9999999
+      ":ipAddress": ipAddress,
+      ":connectedAt": connectedAt ? connectedAt : 0
     },
     ReturnValues:"UPDATED_NEW"
   };
@@ -252,13 +256,13 @@ module.exports.deleteConnected = async (event, context, callback) => {
   let response = {};
 
   console.log('Received parameter in event: ', JSON.stringify(event, null, 2));
-  let {userName} = event;
+  let {ipAddress} = event;
 
   var params = {
     TableName:table,
     Key:{
       "collection": "CONNECTED",
-      "subCollection": "CONNECTED#USER#" + userName,
+      "subCollection": "CONNECTED#USER#" + ipAddress,
     }
   };
 

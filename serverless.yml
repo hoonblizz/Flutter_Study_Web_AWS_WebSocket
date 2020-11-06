@@ -139,7 +139,7 @@ functions:
             template:
               application/json: >
                 {
-                  "userName": "$input.params('userName')"
+                  "ipAddress": "$input.params('ipAddress')"
                 }
           response:
             headers:
@@ -177,7 +177,13 @@ functions:
     events:
       - http:
           path: ${self:service}/messages/getMessage
-          method: get      
+          method: get
+          integration: lambda
+          response:
+            headers:
+              Access-Control-Allow-Origin: "'*'"
+              Content-Type: "'application/json'"
+            template: ${file(templates/template_default_response.txt)}
   updateMessage:
     handler: messageHandler.updateMessage
     events:

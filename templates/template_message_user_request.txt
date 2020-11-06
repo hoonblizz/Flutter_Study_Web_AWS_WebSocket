@@ -1,6 +1,6 @@
 #set($inputRoot = $input.path('$'))
 {
   "ipAddress": "$inputRoot.ipAddress",
-  "content": $inputRoot.content,
+  "content": "$inputRoot.content",
   "userName": "$inputRoot.userName"
 }

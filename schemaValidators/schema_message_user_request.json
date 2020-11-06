@@ -1,0 +1,18 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "Connected user create / update schema validator",
+  "properties": {
+    "ipAddress": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "userName": {
+      "type": "string"
+    }
+  },
+  "required": ["ipAddress"]
+}

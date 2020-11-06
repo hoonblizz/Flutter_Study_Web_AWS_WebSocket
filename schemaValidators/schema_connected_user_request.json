@@ -8,14 +8,16 @@
       "type": "object",
       "properties": {
         "connectionId": {
-          "type": "string",
-          "pattern": "^[a-zA-Z0-9]+$"
+          "type": "string"
+        },
+        "ipAddress": {
+          "type": "string"
         },
         "connectedAt": {
           "type": "number"
         }
       },
-      "required": ["connectionId"]
+      "required": ["connectionId", "ipAddress"]
     },
     "userData": {
       "type": "object",
