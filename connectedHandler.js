@@ -1,96 +1,7 @@
-/*
-  DynamoDB one to many relationship example:
-  https://www.alexdebrie.com/posts/dynamodb-one-to-many/#composite-primary-key--the-query-api-action
-
-  DynamoDB GET / POST Tutorial: 
-  https://medium.com/better-programming/store-fetch-from-dynamodb-with-aws-lambda-342d1785a5d0
-  https://docs.aws.amazon.com/ko_kr/amazondynamodb/latest/developerguide/GettingStarted.NodeJs.03.html#GettingStarted.NodeJs.03.03
-
-  Serverless "resource" example:
-  https://gist.github.com/DavidWells/c7df5df9c3e5039ee8c7c888aece2dd5
-
-  DynamoDB one to many relationship: <-- IMPORTANT!
-  https://stackoverflow.com/questions/55152296/how-to-model-one-to-one-one-to-many-and-many-to-many-relationships-in-dynamodb 
-
-  Condition Expressions:
-  https://docs.aws.amazon.com/ko_kr/amazondynamodb/latest/developerguide/Expressions.OperatorsAndFunctions.html
-
-  Expression Attribute Names
-  https://docs.aws.amazon.com/ko_kr/amazondynamodb/latest/developerguide/Expressions.ExpressionAttributeNames.html
-
-  Schema Validator Example:
-  https://www.fernandomc.com/posts/schema-validation-serverless-framework/
-*/
 'use strict';
 const AWS = require("aws-sdk");
 require("aws-sdk/clients/apigatewaymanagementapi");
 var docClient = new AWS.DynamoDB.DocumentClient();
-
-module.exports.testerFunction = async (event, context) => { 
-  console.log('Event received: ', JSON.stringify(event, null, 2));
-  let {num1, num2} = event;
-  return num1 + num2;
-};
-
-/******************************************************************
- * Web socket handlers
-******************************************************************/
-const success = {
-  statusCode: 200
-};
-
-module.exports.connectionHandler = async (event, context) => { 
-  
-  if (event.requestContext.eventType === 'CONNECT') {
-    console.log(`[ConnectionHandler] Connected: ${JSON.stringify(event, null, 2)}`);
-    return success;
-  }
-  else if (event.requestContext.eventType === 'DISCONNECT') {
-    console.log(`[ConnectionHandler] Disconnected: ${JSON.stringify(event, null, 2)}`);
-    return success;
-  }
-
-};
-
-module.exports.defaultHandler = async (event, context) => {
-  let connectionId = event.requestContext.connectionId;
-  const endpoint = event.requestContext.domainName + "/" + event.requestContext.stage;
-  console.log('[defaultHandler] endpoint is: ' + endpoint);
-  const apigwManagementApi = new AWS.ApiGatewayManagementApi({
-      apiVersion: "2018-11-29",
-      endpoint: endpoint
-  });
-  const params = {
-      ConnectionId: connectionId,
-      Data: 'Seems like wrong endpoint'
-  };
-  return apigwManagementApi.postToConnection(params).promise();
-};
-
-module.exports.databaseStreamHandler = async (event, context) => {
-  console.log(JSON.stringify(event, null, 2));
-  /*
-    Testing from application using web socket
-    Test with local command like,
-    sls invoke -f databaseStreamHandler -d '{"requestContext": {"stage": "dev", "domainName": "us2q8s4g99.execute-api.us-east-1.amazonaws.com", "connectionId": "VDbIBcbCoAMAcqw="}, "body": "{\"randNum\":123456789,\"msg\":\"test from local invoke\"}"}'
-  */
-  const body = JSON.parse(event.body);
-  const randNum = body.randNum;
-  const msg = body.msg;
-  
-  let connectionId = event.requestContext.connectionId;
-  const endpoint = event.requestContext.domainName + "/" + event.requestContext.stage;
-  const apigwManagementApi = new AWS.ApiGatewayManagementApi({
-      apiVersion: "2018-11-29",
-      endpoint: endpoint
-    });
-  const params = {
-      ConnectionId: connectionId,
-      Data: JSON.stringify({connectionID: connectionId, randNum: randNum, msg: msg}),
-    };
-  return apigwManagementApi.postToConnection(params).promise();
-
-};
 
 /******************************************************************
  * CONNECTED Colleciton handlers
@@ -370,15 +281,3 @@ module.exports.deleteConnected = async (event, context, callback) => {
 
   return response;
 };
-
-/******************************************************************
- * MSG Colleciton handlers
-******************************************************************/
-module.exports.createMessage = async (event, context, callback) => {};
-module.exports.getMessage = async (event, context, callback) => {};
-module.exports.updateMessage = async (event, context, callback) => {};
-
-/******************************************************************
- * Database Stream handlers
-******************************************************************/
-module.exports.chatTableStreamHandler = async (event, context, callback) => {};

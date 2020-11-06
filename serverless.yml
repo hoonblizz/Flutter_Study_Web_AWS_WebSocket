@@ -28,24 +28,25 @@ provider:
 functions:
   # Web sockets handlers
   connectionHandler:
-    handler: handler.connectionHandler
+    handler: webSocketHandler.connectionHandler
     events:
       - websocket:
           route: $connect
       - websocket:
           route: $disconnect
   defaultHandler:
-    handler: handler.defaultHandler
+    handler: webSocketHandler.defaultHandler
     events:
       - websocket: $default
-  databaseStreamHandler:
-    handler: handler.databaseStreamHandler
+  webSocketHandler:
+    handler: webSocketHandler.webSocketHandler
     events:
       - websocket:
           route: databaseStream
+
   # DynamoDB Stream Handler
   chatTableStreamHandler:
-    handler: handler.chatTableStreamHandler
+    handler: tableStreamHandler.chatTableStreamHandler
     events:
       - stream:
           type: dynamodb
@@ -53,37 +54,16 @@ functions:
           startingPosition: LATEST
           arn:
             Fn::GetAtt: [flutterChatTable, StreamArn]
-  # CONNECTED collection CRUD
-  testerFunction:
-    handler: handler.testerFunction
-    events:
-      - http:
-          path: ${self:service}/test/testerFunction
-          method: post
-          cors: true
-          integration: lambda
-          request:
-            template:
-              application/json: >
-                #set($inputRoot = $input.path('$'))
-                {
-                  "num1": $inputRoot.input.operand1,
-                  "num2": $inputRoot.input.operand2
-                }
-          response:
-            headers:
-              Access-Control-Allow-Origin: "'*'"
-              Content-Type: "'application/json'"
-            template: ${file(templates/template_default_response.txt)}
 
+  # CONNECTED collection CRUD
   createConnected:
-    handler: handler.createConnected
+    handler: connectedHandler.createConnected
     events:
       - http:
           path: ${self:service}/connected/createConnected
           method: get
   createConnectedUser:
-    handler: handler.createConnectedUser
+    handler: connectedHandler.createConnectedUser
     events:
       - http:
           path: ${self:service}/connected/createConnectedUser
@@ -101,7 +81,7 @@ functions:
               Content-Type: "'application/json'"
             template: ${file(templates/template_default_response.txt)}
   getConnected:
-    handler: handler.getConnected
+    handler: connectedHandler.getConnected
     events:
       - http:
           path: ${self:service}/connected/getConnected
@@ -113,7 +93,7 @@ functions:
               Content-Type: "'application/json'"
             template: ${file(templates/template_default_response.txt)}
   getConnectedUser:
-    handler: handler.getConnectedUser
+    handler: connectedHandler.getConnectedUser
     events:
       - http:
           path: ${self:service}/connected/getConnectedUser
@@ -131,7 +111,7 @@ functions:
               Content-Type: "'application/json'"
             template: ${file(templates/template_default_response.txt)}
   updateConnected:
-    handler: handler.updateConnected
+    handler: connectedHandler.updateConnected
     events:
       - http:
           path: ${self:service}/connected/updateConnected
@@ -149,7 +129,7 @@ functions:
               Content-Type: "'application/json'"
             template: ${file(templates/template_default_response.txt)}
   deleteConnected:
-    handler: handler.deleteConnected
+    handler: connectedHandler.deleteConnected
     events:
       - http:
           path: ${self:service}/connected/deleteConnected    
@@ -169,20 +149,37 @@ functions:
           
   # MSG Collection CRUD
   createMessage:
-    handler: handler.createMessage
+    handler: messageHandler.createMessage
     events:
       - http:
           path: ${self:service}/messages/createMessage
+          method: get
+  createMessageUser:
+    handler: messageHandler.createMessageUser
+    events:
+      - http:
+          path: ${self:service}/messages/createMessageUser
           method: post
-          cors: true      
+          cors: true
+          integration: lambda
+          request:
+            template:
+              application/json: ${file(templates/template_connected_user_request.txt)}
+            schema:
+              application/json: ${file(schemaValidators/schema_connected_user_request.json)}
+          response:
+            headers:
+              Access-Control-Allow-Origin: "'*'"
+              Content-Type: "'application/json'"
+            template: ${file(templates/template_default_response.txt)}  
   getMessage:
-    handler: handler.getMessage
+    handler: messageHandler.getMessage
     events:
       - http:
           path: ${self:service}/messages/getMessage
           method: get      
   updateMessage:
-    handler: handler.updateMessage
+    handler: messageHandler.updateMessage
     events:
       - http:
           path: ${self:service}/messages/updateMessage
