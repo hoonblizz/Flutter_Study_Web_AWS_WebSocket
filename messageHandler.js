@@ -120,9 +120,11 @@ module.exports.getMessage = async (event, context) => {
   // With in "CONNECTED" collection, 
   // check if key "userName" exists and it's not null
   // 식 속성 이름 부르는 방법: Nested 같은 경우엔 하나씩 ExpressionAttributeNames 에 불러준 다음 Dot (.) 으로 써준다.
+  // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html
   var params = {
     TableName: process.env.TABLE_NAME,
     FilterExpression: "#collectionName = :cname AND (attribute_exists(#data.#ipAddress) AND NOT #data.#ipAddress = :null)",
+    Limit: 40,
     ExpressionAttributeNames:{
       "#collectionName": "collection",
       "#data": "data",

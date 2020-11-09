@@ -12,17 +12,23 @@ provider:
     websocket: true
   environment:
     TABLE_NAME: flutter-chat-tbl
+    SERVICE_NAME: ${self:service}
+    STAGE_NAME: ${self:provider.stage}
+    REGION_NAME: ${self:provider.region}
   iamRoleStatements:
     - Effect: "Allow"
       Action:
-          - dynamodb:DescribeTable
-          - dynamodb:Query
-          - dynamodb:Scan
-          - dynamodb:GetItem
-          - dynamodb:PutItem
-          - dynamodb:UpdateItem
-          - dynamodb:DeleteItem
+        - dynamodb:*
       Resource: "arn:aws:dynamodb:${self:provider.region}:*:*"
+    - Effect: "Allow"
+      Action:
+        - lambda:*
+      Resource: "arn:aws:lambda:${self:provider.region}:*:*"
+    - Effect: Allow
+      Action:
+        #- "execute-api:ManageConnections"
+        - "execute-api:*"
+      Resource: "arn:aws:execute-api:*:*:**/@connections/*"
 
  
 functions:
@@ -38,11 +44,21 @@ functions:
     handler: webSocketHandler.defaultHandler
     events:
       - websocket: $default
-  webSocketHandler:
-    handler: webSocketHandler.webSocketHandler
+  webSocketMessageHandler:
+    handler: webSocketHandler.webSocketMessageHandler
     events:
       - websocket:
-          route: databaseStream
+          route: chatMessages
+  webSocketLoginHandler:
+    handler: webSocketHandler.webSocketLoginHandler
+    events:
+      - websocket:
+          route: chatRoomLogin
+  webSocketTestHandler:
+    handler: webSocketHandler.webSocketTestHandler
+    events:
+      - websocket:
+          route: chatTest
 
   # DynamoDB Stream Handler
   chatTableStreamHandler:
@@ -164,9 +180,9 @@ functions:
           integration: lambda
           request:
             template:
-              application/json: ${file(templates/template_connected_user_request.txt)}
+              application/json: ${file(templates/template_message_user_request.txt)}
             schema:
-              application/json: ${file(schemaValidators/schema_connected_user_request.json)}
+              application/json: ${file(schemaValidators/schema_message_user_request.json)}
           response:
             headers:
               Access-Control-Allow-Origin: "'*'"
