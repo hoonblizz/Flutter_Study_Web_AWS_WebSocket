@@ -10,6 +10,8 @@ Stream 안에서 각 CONNECTED collection 안의 유저들에게 <br>
 ## Web socket
 - Disconnection 은 다른 페이지로 넘어가거나 브라우저를 종료해도 일어난다 <br>
 
+## Schema
+Input 혹은 output 데이터의 포멧을 결정한다. <br>
 ## request, response template 
 Number 가 들어갈때랑 String 이 들어갈때랑 다른점을 모르면 문제가 생길수 있다. <br>
 간단히 말해서, <br>
