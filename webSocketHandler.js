@@ -76,7 +76,7 @@ module.exports.webSocketMessageHandler = async (event, context) => {
   let connectionId = parsedEvent.requestContext.connectionId;
   const endpoint = parsedEvent.requestContext.domainName + "/" + parsedEvent.requestContext.stage;
   
-  console.log(`Connection Id: ${connectionId} and end point: ${endpoint}`);
+  console.log(`[WebSocket Message Handler] Connection Id: ${connectionId} and end point: ${endpoint}`);
   const apigwManagementApi = new AWS.ApiGatewayManagementApi({
       apiVersion: "2018-11-29",
       endpoint: endpoint
@@ -116,9 +116,11 @@ module.exports.webSocketLoginHandler = async (event, context) => {
     })
   }
 
+  console.log(`[WebSocket Login Handler] ${connectionId} and ip is ${ipAddress}`);
+
   try {
     const data = await lambda.invoke(lambdaParams).promise();
-    console.log('Create connectedUser Lambda called: ', JSON.stringify(data, null, 2));
+    console.log('[WebSocket Login Handler] Create connectedUser Lambda called: ', JSON.stringify(data, null, 2));
   } catch(e) {
     console.log('Error Calling Lambda: ', JSON.stringify(e, null, 2));
   }
