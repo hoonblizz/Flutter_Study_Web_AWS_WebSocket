@@ -1,5 +1,12 @@
 # Flutter + AWS Web Socket
 
+## Login Process
+User 가 아이디와 함께 채팅방에 입장. (ip 주소를 유니크값으로 쓰므로 아이디 중복체크는 필요없다) <br>
+DB 의 USER 가 업댓된다. <br>
+유저가 채팅 메세지를 입력하면 DB 의 MESSAGES 가 업댓되고, <br>
+그러면 해당 Stream function 이 동작하면서 <br>
+현재 접속중인 유저들에게 메세지를 보낸다. <br>
+
 ## Chat Process
 API Gateway + Lambda 로 메세지를 보내면 <br>
 DynamoDB 에 메세지가 들어가면서 곧바로 Stream Lambda 가 발동되고 <br>

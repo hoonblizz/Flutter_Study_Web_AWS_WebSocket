@@ -88,7 +88,7 @@ module.exports.createConnectedUser = async (event, context) => {
   return JSON.stringify(response);
 }
 
-/// Get ALL connected users
+/// Get ALL connected users - Used in Dynamo Stream function
 module.exports.getConnected = async (event, context, callback) => {
 
   let response = {};
