@@ -83,3 +83,11 @@ Lambda 에서 web socket 에 연결된 lambda 를 불러서 웹 소켓을 작동
 
 ### Unexpected token o in JSON at position 1
 Single, Double quote 확인한다. <br>
+
+
+### Testing messages
+sls invoke -f createMessageUser -d '{"ipAddress": "123.456.789", "content": "Yap Im here", "userName": "randomUser123"}'
+
+sls invoke -f createMessageUser -d '{"ipAddress": "123.456.789", "content": "Ask me anything :D", "userName": "randomUser123"}'
+
+sls invoke -f createMessageUser -d '{"ipAddress": "123.456.789", "content": "Ask me anything :D", "userName": "randomUser123"}'
